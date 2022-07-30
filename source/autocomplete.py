@@ -1,28 +1,36 @@
+import os
+import pickle
 from string import punctuation
+
 import Levenshtein as lev
+
+import db
 
 
 class Autocomplete:
-    def __init__(self, titles):
-        self.corpus = titles
-        self.corpus_prp = [self.preprocess_text(doc) for doc in self.corpus]
-        self.uniq_words_corpus = self.corpus_prp
+    def __init__(self):
+        if not os.path.isdir('models'):
+            os.makedirs('models')
+        if not os.path.isfile("models/song_titles"):
+            song_titles = db.get_song_titles()
+            with open('models/song_titles', 'wb') as fp:
+                pickle.dump([self.preprocess_text(doc) for doc in song_titles], fp)
+
+        with open('models/song_titles', 'rb') as fp:
+            self.corpus_prp = pickle.load(fp)
+        self.uniq_corpus = set(self.corpus_prp)
 
     def preprocess_text(self, text):
         tokens = text.lower().split(" ")
-
         tokens = [token for token in tokens if token != " " and token.strip() not in punctuation]
         text = " ".join(tokens)
         return text
 
-    def compute_df(self, word, corpus):
-        return sum([1.0 for i in corpus if word in i]) / len(corpus)
-
-    def _get_closest_levenstein_word(self, token, top_k=10):
+    def _get_closest_levenstein(self, token, top_k=10):
         top_token = [" " for _ in range(top_k)]
         top_score = [0.0 for _ in range(top_k)]
 
-        for t in self.uniq_words_corpus:
+        for t in self.uniq_corpus:
             temp_score_lev = lev.ratio(token, t)
             for i in range(top_k):
                 if temp_score_lev > top_score[i]:
@@ -43,14 +51,9 @@ class Autocomplete:
                     top_token[i] = t
                     break
 
-        return [top_token, top_score]
+        return top_token
 
-    def calculate_levenshtein(self, word, a=0.9):
-        top_k_words, top_k_scores = self._get_closest_levenstein_word(word, top_k=5)
-        d = {}
-        for t, sc in zip(top_k_words, top_k_scores):
-            new_score = self.compute_df(t, self.corpus_prp) * a + sc * (1 - a)
-            d.update({t: new_score})
-        sort_top_k = sorted(d.items(), key=lambda item: item[1], reverse=True)
-        result = [w[0] for w in sort_top_k]
-        return result
+    def calculate_levenshtein(self, query):
+        query = self.preprocess_text(query)
+        top_k_results = self._get_closest_levenstein(query, top_k=5)
+        return top_k_results

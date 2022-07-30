@@ -18,8 +18,7 @@ pool = {}
 @app.on_event("startup")
 async def initialize_pool():
     logger.info("Initialize pool")
-    song_titles = db.get_song_titles()
-    autocomplete = Autocomplete(song_titles)
+    autocomplete = Autocomplete()
     pool['autocomplete'] = autocomplete
 
 
@@ -32,7 +31,7 @@ async def check_health():
 async def process_autocomplete(request: Request):
     body_bytes = await request.body()
     try:
-        query = dict(request.headers)['query']
+        query = json.loads(body_bytes)['body']['query']
     except Exception:
         return {'error': 'Wrong format'}
     top_queries = pool['autocomplete'].calculate_levenshtein(query)
@@ -56,4 +55,3 @@ app.openapi = custom_openapi
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=9092)
-
