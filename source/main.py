@@ -3,9 +3,10 @@ import logging
 
 from fastapi import FastAPI, Request
 import uvicorn
+from fastapi.openapi.utils import get_openapi
 
-from source.autocomplete import Autocomplete
-import source.db as db
+from autocomplete import Autocomplete
+import db
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,21 @@ async def process_autocomplete(request: Request):
     return {'queries': top_queries}
 
 
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Halvabot ML server",
+        version="1.0.0",
+        description="Halvabot website functions that require python",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
 if __name__ == '__main__':
-    uvicorn.run(app,
-                port=9092)
+    uvicorn.run(app, host="0.0.0.0", port=9092)
+
