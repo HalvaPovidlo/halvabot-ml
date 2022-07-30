@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 .idea/
+
+halvabot-firebase.json
+halvabot-google.json
