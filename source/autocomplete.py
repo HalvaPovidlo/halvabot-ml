@@ -5,8 +5,8 @@ import Levenshtein as lev
 class Autocomplete:
     def __init__(self, titles):
         self.corpus = titles
-        self.corpus_prp = [self.preprocess_text(doc).split(",")[0].split(" ") for doc in self.corpus]
-        self.uniq_words_corpus = set([_ for i in range(len(self.corpus_prp)) for _ in self.corpus_prp[i]])
+        self.corpus_prp = [self.preprocess_text(doc) for doc in self.corpus]
+        self.uniq_words_corpus = self.corpus_prp
 
     def preprocess_text(self, text):
         tokens = text.lower().split(" ")
@@ -46,10 +46,11 @@ class Autocomplete:
         return [top_token, top_score]
 
     def calculate_levenshtein(self, word, a=0.9):
-        top_k_words, top_k_scores = self._get_closest_levenstein_word(word, top_k=20)
+        top_k_words, top_k_scores = self._get_closest_levenstein_word(word, top_k=5)
         d = {}
         for t, sc in zip(top_k_words, top_k_scores):
             new_score = self.compute_df(t, self.corpus_prp) * a + sc * (1 - a)
             d.update({t: new_score})
-
-        return sorted(d.items(), key=lambda item: item[1], reverse=True)
+        sort_top_k = sorted(d.items(), key=lambda item: item[1], reverse=True)
+        result = [w[0] for w in sort_top_k]
+        return result
