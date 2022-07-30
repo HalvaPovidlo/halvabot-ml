@@ -1,3 +1,4 @@
-fastapi
-uvicorn
-Levenshtein
+fastapi==0.79.0
+uvicorn==0.18.2
+Levenshtein==0.20.1
+firebase_admin==5.2.0
