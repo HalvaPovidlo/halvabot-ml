@@ -130,5 +130,6 @@ dmypy.json
 
 .idea/
 
-halvabot-firebase.json
+models/
+source/halvabot-firebase.json
 halvabot-google.json

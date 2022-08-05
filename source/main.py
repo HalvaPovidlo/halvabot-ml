@@ -1,23 +1,31 @@
 import json
 import logging
+import time
 
-from fastapi import FastAPI, Request
-import uvicorn
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+import uvicorn
 
 from autocomplete import Autocomplete
-import db
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 pool = {}
 
 
 @app.on_event("startup")
 async def initialize_pool():
-    logger.info("Initialize pool")
+    logger.info("initialize pool")
     autocomplete = Autocomplete()
     pool['autocomplete'] = autocomplete
 
@@ -27,15 +35,15 @@ async def check_health():
     return {'alive': True}
 
 
-@app.get("/api/autocomplete")
+@app.post("/api/v1/complete/song")
 async def process_autocomplete(request: Request):
     body_bytes = await request.body()
     try:
-        query = json.loads(body_bytes)['body']['query']
+        query = json.loads(body_bytes)['query']
     except Exception:
-        return {'error': 'Wrong format'}
+        raise HTTPException(status_code=400, detail="Wrong format")
     top_queries = pool['autocomplete'].calculate_levenshtein(query)
-    return {'queries': top_queries}
+    return {'items': top_queries}
 
 
 def custom_openapi():

@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: halvabot-ml
+  version: '1.0'
+  description: This API controls ml server
+  contact:
+    name: Andrei Khodko
+    url: 'https://github.com/halvapovidlo'
+    email: andrei.khodko@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - description: ml-server
+    url: 'http://51.250.81.4:9092/api/v1'
+  - description: local-server
+    url: 'http://localhost:9092/api/v1'
+tags:
+  - name: music
+    description: Music ml functions
+paths:
+  /complete/song:
+    parameters: []
+    post:
+      summary: Autocomplete song
+      operationId: post-complete-song
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                x-examples:
+                  example-1:
+                    items:
+                      - string
+                      - string
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - items
+              examples:
+                example-1:
+                  value:
+                    items:
+                      - string
+        '401':
+          description: Unauthorized
+      description: Completes the song name according to ml algorithms
+      security:
+        - JWT: []
+      tags:
+        - music
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-examples:
+                example-1:
+                  query: Rick roll
+              properties:
+                query:
+                  type: string
+                  x-oapi-codegen-extra-tags:
+                    binding: required
+                  description: Case-insensitive
+              required:
+                - query
+        description: Query to autocomplete
+components:
+  securitySchemes:
+    JWT:
+      type: http
+      scheme: bearer
